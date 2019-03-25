@@ -1,0 +1,7 @@
+volumes/logs/
+volumes/etc/
+.vagrant/
+.idea/
+.DS_Store
+config.yml
+locks/*

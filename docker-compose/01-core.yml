@@ -1,0 +1,83 @@
+version: "3"
+
+services:
+
+  # Base Images
+  php5.6:
+    build: ../php5.6
+
+  php7.2:
+    build: ../php7.2
+
+  # Application Containers
+  main:
+    build: ../main
+    container_name: main
+    depends_on:
+      - php7.2
+    expose:
+      - "9000"
+      - "9100"
+    volumes:
+      - /var/www/test:/var/www/test
+      - /var/log:/var/log:rw
+    links:
+      - db
+    networks:
+      - mynet
+      
+  db:
+    build: ../db
+    container_name: db
+    expose:
+      - "3306"
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - /opt/mysql/init:/docker-entrypoint-initdb.d
+      - /var/lib/mysql:/var/lib/mysql:rw
+      - /vagrant:/vagrant:rw
+    networks:
+      - mynet
+
+  # This container runs all PHP cron jobs
+  cron:
+    build: ../cron
+    container_name: cron
+    depends_on:
+      - db
+    volumes:
+      - /var/www/:/var/www/:rw
+      - /var/log:/var/log:rw
+    networks:
+      - mynet
+
+  nginx:
+    build: ../nginx
+    container_name: nginx
+    depends_on:
+      - main
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /vagrant/nginx/sites-enabled:/etc/nginx/sites-available
+      - /vagrant/nginx/ssl:/etc/nginx/ssl
+      - /var/www/:/var/www/
+      - /var/log/nginx:/var/log/nginx:rw
+    networks:
+      mynet:
+        aliases:
+          # Allows PHP container to internally call API, otherwise internal DNS does not resolve
+          - api.main.local
+
+networks:
+  mynet:
+    ipam:
+      config:
+        - subnet: 192.18.0.0/24

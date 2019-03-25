@@ -1,0 +1,7 @@
+vm:
+  memory: 2048
+  cpus: 4
+code:
+  main_path:
+  test_path:
+  logs_path:

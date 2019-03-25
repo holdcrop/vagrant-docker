@@ -1,0 +1,1 @@
+0 12 * * * /usr/bin/php /var/www/main/cron/daily.php > /dev/null 2>&1
